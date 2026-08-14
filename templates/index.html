@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUEST LOG - SCHWEINEHUND</title>
+    <link href="https://googleapis.com" rel="stylesheet">
+    <style>
+        body { font-family: 'Press Start 2P', monospace; max-width: 1200px; margin: 0 auto; padding: 20px; background: #000; color: #fff; display: flex; gap: 30px; box-sizing: border-box; line-height: 1.6; }
+        body::before { content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05)); z-index: 999; background-size: 100% 4px, 6px 100%; pointer-events: none; }
+        .main-content { flex: 2; }
+        .sidebar { flex: 1.1; background: #111; padding: 25px; border: 4px solid #333; box-shadow: 0 0 0 4px #000, 0 0 0 6px #fff; height: fit-content; min-width: 320px; }
+        .brand-bar { background: #111; padding: 20px; border: 4px solid #333; box-shadow: 0 0 0 4px #000, 0 0 0 6px #ff00ff; display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; flex-wrap: wrap; gap: 15px; }
+        .brand-logo-title { display: flex; align-items: center; gap: 12px; font-size: 16px; color: #ff00ff; text-shadow: 2px 2px #000; }
+        .user-nav { display: flex; align-items: center; gap: 15px; font-size: 11px; flex-wrap: wrap; }
+        .nav-link { color: #00ffff; text-decoration: none; padding: 10px 14px; border: 2px solid #333; background: #000; font-weight: bold; }
+        .nav-link:hover { border-color: #00ffff; background: #111; }
+        .header-day { display: flex; justify-content: space-between; align-items: center; margin: 30px 0; border-bottom: 4px double #333; padding-bottom: 20px; }
+        .header-day h2 { margin: 0; font-size: 15px; color: #ffff00; }
+        .score-box { background: #000; color: #00ff00; padding: 12px 24px; border: 4px solid #00ff00; font-size: 18px; box-shadow: 4px 4px #003300; font-weight: bold; }
+        .task-card { background: #111; padding: 25px; margin-bottom: 25px; border: 4px solid #333; box-shadow: 0 0 0 4px #000, 0 0 0 6px #222; }
+        .task-card h3 { margin: 0 0 20px 0; color: #fff; font-size: 15px; letter-spacing: 0.5px; line-height: 1.5; }
+        .btn-group { display: flex; gap: 20px; flex-direction: column; }
+        .btn { padding: 16px 12px; border: 4px solid #444; cursor: pointer; font-family: 'Press Start 2P', monospace; font-size: 12px; text-align: center; transition: all 0.1s; box-shadow: inset -4px -4px #000; line-height: 1.8; font-weight: bold; }
+        .btn:active { box-shadow: inset 4px 4px #000; transform: translateY(2px); }
+        .btn-off { background: #222; color: #777; border-color: #444; }
+        .btn-off:hover { color: #bbb; border-color: #666; }
+        .btn-s1-on { background: #ff9800; color: white; border-color: #ffb74d; box-shadow: inset -4px -4px #b26a00; text-shadow: 2px 2px #000; }
+        .btn-s2-on { background: #2196F3; color: white; border-color: #64b5f6; box-shadow: inset -4px -4px #0d47a1; text-shadow: 2px 2px #000; }
+        
+        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 13px; color: #ff00ff; font-weight: bold; }
+        .cal-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 11px; }
+        .cal-table th { padding: 10px 0; color: #ffff00; font-weight: normal; font-size: 12px; }
+        .cal-table td { padding: 6px 3px; }
+        .cal-day-cell { text-decoration: none; color: #fff; display: block; padding: 12px 2px; background: #000; border: 2px solid #222; font-weight: bold; }
+        .cal-day-cell:hover { border-color: #00ffff; background: #111; }
+        .cal-active { background: #00ff00 !important; color: #000 !important; font-weight: bold; border-color: #fff; box-shadow: 4px 4px #003300; }
+        .xp-badge { font-size: 9px; color: #00ff00; display: block; margin-top: 8px; font-weight: bold; }
+        .cal-active .xp-badge { color: #000; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div class="brand-bar">
+            <div class="brand-logo-title">👾 SCHWEINEHUND_</div>
+            <div class="user-nav">
+                <span style="color: #00ff00;">1P:{{ current_user.username }}</span>
+                <a class="nav-link" href="/stats">STATS</a>
+                <a class="nav-link" href="/manage">EDIT</a>
+                <a class="nav-link" href="/logout" style="color: #ff0000; border-color: #ff0000;">QUIT</a>
+            </div>
+        </div>
+
+        <div class="header-day">
+            <h2>STAGE: {{ selected_date.strftime('%d/%m/%Y') }}</h2>
+            <div class="score-box">{{ total_points }} XP</div>
+        </div>
+
+        {% for task in tasks %}
+        <div class="task-card" style="{% if status_map.get(task.id, {}).s1 %}border-color: #ff9800;{% elif status_map.get(task.id, {}).s2 %}border-color: #2196F3;{% endif %}">
+            <h3>> {{ task.title }}</h3>
+            <div class="btn-group">
+                <form action="/check/{{ task.id }}/1" method="POST" style="flex: 1;">
+                    <input type="hidden" name="date" value="{{ selected_date.strftime('%Y-%m-%d') }}">
+                    <button type="submit" class="btn {% if status_map.get(task.id, {}).s1 %}btn-s1-on{% else %}btn-off{% endif %}">
+                        [LVL 1] {{ task.stage1_text }}<br>+{{ task.stage1_points }} XP
+                    </button>
+                </form>
+                <form action="/check/{{ task.id }}/2" method="POST" style="flex: 1;">
+                    <input type="hidden" name="date" value="{{ selected_date.strftime('%Y-%m-%d') }}">
+                    <button type="submit" class="btn {% if status_map.get(task.id, {}).s2 %}btn-s2-on{% else %}btn-off{% endif %}">
+                        [MAXED] {{ task.stage2_text }}<br>+{{ task.stage2_points }} XP
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <p style="text-align: center; color: #666; font-size: 13px; line-height: 1.8; margin-top: 40px;">NO QUESTS ACTIVE.<br>GO TO [EDIT] TO GENERATE MISSIONS!</p>
+        {% endfor %}
+    </div>
+
+    <div class="sidebar">
+        <div class="cal-header">
+            <a href="/dashboard?date={{ prev_month }}" style="text-decoration:none; color: #00ffff; font-weight: bold;">&lt;</a>
+            <span>{{ month_name }} {{ year }}</span>
+            <a href="/dashboard?date={{ next_month }}" style="text-decoration:none; color: #00ffff; font-weight: bold;">&gt;</a>
+        </div>
+        <table class="cal-table">
+            <thead>
+                <tr><th>M</th><th>D</th><th>M</th><th>D</th><th>F</th><th>S</th><th>S</th></tr>
+            </thead>
+            <tbody>
+                {% for week in calendar_weeks %}
+                <tr>
+                    {% for day_data in week %}
+                        <td>
+                            {% if day_data %}
+                                <a href="/dashboard?date={{ day_data.date_str }}" class="cal-day-cell {% if day_data.date_str == selected_date.strftime('%Y-%m-%d') %}cal-active{% endif %}">
+                                    {{ day_data.day }}
+                                    {% if day_data.xp > 0 %}
+                                        <span class="xp-badge">+{{ day_data.xp }}</span>
+                                    {% endif %}
+                                </a>
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p style="text-align:center; margin-top:30px; margin-bottom: 0;"><a href="/dashboard" class="nav-link" style="color:#00ff00; background:#000; border-color:#00ff00; display:inline-block; padding: 14px; width: 90%; font-size: 11px; text-align: center;">🎯 GOTO TODAY</a></p>
+    </div>
+</body>
+</html>
