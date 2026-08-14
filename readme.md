@@ -39,7 +39,7 @@ Stelle sicher, dass **Python 3.11+** auf deinem System installiert ist.
    ```bash
    python3 app.py
    ```
-5. Öffne im Browser: `http://127.0.0`
+5. Öffne im Browser: `http://127.0.0.1:5000`
 
 ---
 
@@ -59,24 +59,55 @@ python3 generate_test_data.py
 
 ---
 
-## 🚀 3. PROD-HOSTING (PUBLIC INTERNET ACCESS)
+## 🚀 3. PROD-HOSTING & DOCKER REGISTRY
 
 Für den echten Einsatz im Internet nutzen wir **Docker** und den produktionsbereiten WSGI-Server **Gunicorn**. Die SQLite-Datenbank wird über ein Volume dauerhaft auf dem Host-Server gespeichert.
 
-### Lokales Docker Image bauen
+### 3.1 Lokales Docker Image bauen
 ```bash
 docker build -t schweinehund-app:latest .
 ```
 
-### Deployment auf dem Server (Ohne SSL-Proxy)
-Führe diesen Befehl auf deinem Root-Server/VPS aus, um die App im Hintergrund auf Port 80 (HTTP) bereitzustellen:
+### 3.2 Image in die Registry pushen (Deployment-Vorbereitung)
+Um das gebaute Image auf deinen Server zu laden, wird es in einer Container Registry gespeichert. 
+
+#### 🔐 Voraussetzung: Access Token & Sicherheits-Setup
+Für den Login wird ein **Personal Access Token (PAT)** benötigt. 
+* **Woher nehmen?** Auf GitHub unter *Settings* → *Developer settings* → *Personal access tokens (classic)* ein neues Token mit dem Scope `write:packages` erstellen. *(Für GitLab: Unter User Settings → Access Tokens ein Token mit `write_registry` erstellen).*
+* **Sicherheit:** Speichere diesen Token lokal **ausschließlich** in einer Datei namens `.token` im Projektverzeichnis ab. 
+* **Git-Schutz:** Stelle sicher, dass die Datei niemals auf GitHub landet:
+  ```bash
+  echo ".token" >> .gitignore
+  ```
+
+#### Push-Vorgang ausführen
+Führe dieses Skript im Terminal aus (ersetze `DEIN_BENUTZERNAME` mit deinem echten Account-Namen):
+
+```bash
+# 1. Variablen definieren (Anpassen!)
+USERNAME="DEIN_BENUTZERNAME"
+REGISTRY="ghcr.io"  # Für GitLab hier "://gitlab.com" nutzen
+
+# 2. Login via .token-Datei durchführen
+cat .token | docker login REGISTRY -u USERNAME --password-stdin
+
+# 3. Image für die Online-Registry taggen
+docker tag schweinehund-app:latest REGISTRY/USERNAME/schweinehund-app:latest
+
+# 4. Image hochladen
+docker push REGISTRY/USERNAME/schweinehund-app:latest
+```
+
+### 3.3 Deployment auf dem Server (Ohne SSL-Proxy)
+Logge dich auf deinem Root-Server/VPS ein und führe diesen Befehl aus, um das Image aus der Registry zu ziehen und im Hintergrund auf Port 80 bereitzustellen (ersetze auch hier `ghcr.io/DEIN_BENUTZERNAME` mit deinem Pfad):
+
 ```bash
 docker run -d \
   -p 80:8000 \
   --name schweinehund_game \
   -v /var/lib/schweinehund/data:/app/data \
   --restart unless-stopped \
-  schweinehund-app:latest
+  ghcr.io/DEIN_BENUTZERNAME/schweinehund-app:latest
 ```
 
 ### 🔒 Wichtig für den Live-Betrieb (SSL/HTTPS & Security)
