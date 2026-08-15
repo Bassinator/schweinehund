@@ -78,8 +78,25 @@ def get_xp_for_date(target_date):
     return points
 
 def build_graph(x_data, y_data, title, xlabel):
+    plt.clf()
     plt.figure(figsize=(7, 3.5))
-    plt.plot(x_data, y_data, marker='o', color='#2196F3', linewidth=2)
+    
+    x_list = list(x_data) if x_data else []
+    y_list = list(y_data) if y_data else []
+    
+    # FIX: If we only have 1 data period (e.g., 1 month or 1 year), 
+    # a line plot is invisible. We force a bar chart instead.
+    if len(x_list) <= 1:
+        plt.bar(x_list if x_list else ["No Data"], y_list if y_list else [0], color='#2196F3', width=0.4)
+    else:
+        # If the X-axis contains text/strings, map them to numeric positions
+        if x_list and isinstance(x_list[0], str):
+            x_indices = range(len(x_list))
+            plt.plot(x_indices, y_list, marker='o', color='#2196F3', linewidth=2)
+            plt.xticks(x_indices, x_list, rotation=30 if len(x_list) > 6 else 0)
+        else:
+            plt.plot(x_list, y_list, marker='o', color='#2196F3', linewidth=2)
+            
     plt.title(title, fontsize=12, fontweight='bold')
     plt.xlabel(xlabel)
     plt.ylabel('XP')
