@@ -84,9 +84,9 @@
 
     <div class="sidebar">
         <div class="cal-header">
-            <a href="/dashboard?date={{ prev_month }}" style="text-decoration:none; color: #00ffff; font-weight: bold;">&lt;</a>
+            <a href="{{ url_for('schweinehund.dashboard') }}?date={{ prev_month }}" style="text-decoration:none; color: #00ffff; font-weight: bold;">&lt;</a>
             <span>{{ month_name }} {{ year }}</span>
-            <a href="/dashboard?date={{ next_month }}" style="text-decoration:none; color: #00ffff; font-weight: bold;">&gt;</a>
+            <a href="{{ url_for('schweinehund.dashboard') }}?date={{ next_month }}" style="text-decoration:none; color: #00ffff; font-weight: bold;">&gt;</a>
         </div>
         <table class="cal-table">
             <thead>
@@ -98,7 +98,8 @@
                     {% for day_data in week %}
                         <td>
                             {% if day_data %}
-                                <a href="/dashboard?date={{ day_data.date_str }}" class="cal-day-cell {% if day_data.date_str == selected_date.strftime('%Y-%m-%d') %}cal-active{% endif %}">
+                                <a href="{{ url_for('schweinehund.dashboard') }}?date={{ day_data.date_str }}" class="cal-day-cell {% if day_data.date_str == selected_date.strftime('%Y-%m-%d') %}cal-active{% endif %}">
+
                                     {{ day_data.day }}
                                     {% if day_data.xp > 0 %}
                                         <span class="xp-badge">+{{ day_data.xp }}</span>
@@ -111,7 +112,7 @@
                 {% endfor %}
             </tbody>
         </table>
-        <p style="text-align:center; margin-top:30px; margin-bottom: 0;"><a href="/dashboard" class="nav-link" style="color:#00ff00; background:#000; border-color:#00ff00; display:inline-block; padding: 14px; width: 90%; font-size: 11px; text-align: center;">🎯 GOTO TODAY</a></p>
+        <p style="text-align:center; margin-top:30px; margin-bottom: 0;"><a href="{{ url_for('schweinehund.dashboard') }}" class="nav-link" style="color:#00ff00; background:#000; border-color:#00ff00; display:inline-block; padding: 14px; width: 90%; font-size: 11px; text-align: center;">🎯 GOTO TODAY</a></p>
     </div>
 </body>
 </html>
