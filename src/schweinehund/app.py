@@ -228,6 +228,37 @@ def stats():
     # Complete the truncated route response cleanly
     return render_template('stats.html', week_graph=week_graph)
 
+@app.route('/stats')
+@login_required
+def stats():
+    today = date.today()
+    
+    week_dates = [today - timedelta(days=i) for i in range(6, -1, -1)]
+    week_x = [d.strftime('%a') for d in week_dates]
+    week_y = [get_xp_for_date(d) for d in week_dates]
+    week_graph = build_graph(week_x, week_y, 'XP-Verlauf (Letzte 7 Tage)', 'Wochentag')
+
+    month_dates = [today - timedelta(days=i) for i in range(29, -1, -1)]
+    month_x = [d.strftime('%d.%m') for d in month_dates]
+    month_y = [get_xp_for_date(d) for d in month_dates]
+    month_graph = build_graph(month_x, month_y, 'XP-Verlauf (Letzte 30 Tage)', 'Datum')
+
+    year_y = []
+    year_x = []
+    current_first_of_month = today.replace(day=1)
+    for i in range(11, -1, -1):
+        m_date = current_first_of_month - timedelta(days=i*30)
+        m_date = m_date.replace(day=1)
+        _, num_days = calendar.monthrange(m_date.year, m_date.month)
+        mon_xp = 0
+        for day in range(1, num_days + 1):
+            mon_xp += get_xp_for_date(date(m_date.year, m_date.month, day))
+        year_x.append(m_date.strftime('%b %y'))
+        year_y.append(mon_xp)
+    year_graph = build_graph(year_x, year_y, 'XP-Verlauf (Letzte 12 Monate)', 'Monat')
+
+    return render_template('stats.html', week_graph=week_graph, month_graph=month_graph, year_graph=year_graph)
+
 @bp.route('/manage', methods=['GET', 'POST'])
 @login_required
 def manage():
