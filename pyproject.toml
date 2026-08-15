@@ -32,5 +32,4 @@ schweinehund = ["templates/*", "static/*"]
 
 [project.scripts]
 # Verknüpft das Terminal-Kommando mit dem Einstiegspunkt in src/schweinehund/main.py
-schweinehund-run = "schweinehund.main:main"
-
+schweinehund-run = "schweinehund.app:start_dev_server"

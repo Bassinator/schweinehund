@@ -249,5 +249,17 @@ def delete_task(task_id):
     db.session.commit()
     return redirect(url_for('manage'))
 
+def start_dev_server():
+    """
+    This function is only called when you type 'schweinehund-run' 
+    manually in your local terminal for development.
+    """
+    # Force development settings for local testing
+    os.environ["FLASK_ENV"] = "development"
+    os.environ["FLASK_DEBUG"] = "1"
+    
+    print("Starting local Schweinehund development server with hot-reload...")
+    app.run(host="127.0.0.1", port=5000, debug=True)
+
 if __name__ == '__main__':
     app.run(debug=True)
