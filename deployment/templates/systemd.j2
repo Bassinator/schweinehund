@@ -9,7 +9,6 @@ WorkingDirectory={{ app_dir }}
 # 1. We call gunicorn directly from the production virtual environment
 # 2. We bind it to all interfaces (0.0.0.0) or localhost (127.0.0.1)
 # 3. We point it to the app instance inside your module structure
-ExecStart={{ app_dir }}/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 schweinehund.app:app
 ExecStart={{ app_dir }}/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 --env PYTHONUNBUFFERED=1 --env APPLICATION_SUBPATH=/schweinehund schweinehund.app:app
 Restart=always
 RestartSec=5
