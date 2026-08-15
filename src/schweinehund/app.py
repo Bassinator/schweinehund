@@ -15,11 +15,13 @@ from flask import Flask
 
 # Dynamically find the absolute path of this file's directory
 BASE_DIR = Path(__file__).parent.resolve()
+APPLICATION_SUBPATH = os.getenv("APPLICATION_SUBPATH", "")
 
 app = Flask(
     __name__,
     template_folder=str(BASE_DIR / "templates"),
-    static_folder=str(BASE_DIR / "static")
+    static_folder=str(BASE_DIR / "static"),
+    static_url_path=f"{APPLICATION_SUBPATH}/static" if APPLICATION_SUBPATH else "/static"
 )
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -260,6 +262,18 @@ def start_dev_server():
     
     print("Starting local Schweinehund development server with hot-reload...")
     app.run(host="127.0.0.1", port=5000, debug=True)
+
+if APPLICATION_SUBPATH:
+    class SubpathMiddleware:
+        def __init__(self, wsgi_app, prefix):
+            self.wsgi_app = wsgi_app
+            self.prefix = prefix
+
+        def __call__(self, environ, start_response):
+            environ['SCRIPT_NAME'] = self.prefix
+            return self.wsgi_app(environ, start_response)
+
+    app.wsgi_app = SubpathMiddleware(app.wsgi_app, APPLICATION_SUBPATH)
 
 if __name__ == '__main__':
     app.run(debug=True)
