@@ -26,6 +26,10 @@ dependencies = [
 # WICHTIG: Erzwingt, dass static/ und templates/ mitverpackt werden
 include-package-data = true
 
+[tool.setuptools.package-data]
+# This explicitly tells pip to bundle your templates and static folders
+schweinehund = ["templates/*", "static/*"]
+
 [project.scripts]
 # Verknüpft das Terminal-Kommando mit dem Einstiegspunkt in src/schweinehund/main.py
 schweinehund-run = "schweinehund.main:main"
