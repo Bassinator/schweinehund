@@ -45,8 +45,8 @@
             <div class="brand-logo-title">👾 SCHWEINEHUND_</div>
             <div class="user-nav">
                 <span style="color: #00ff00;">1P:{{ current_user.username }}</span>
-                <a class="nav-link" href="/stats">STATS</a>
-                <a class="nav-link" href="/manage">EDIT</a>
+                <a class="nav-link" href="{{ url_for('schweinehund.stats') }}">STATS</a>
+                <a class="nav-link" href="{{ url_for('schweinehund.manage') }}">EDIT</a>
                 <a class="nav-link" href="/logout" style="color: #ff0000; border-color: #ff0000;">QUIT</a>
             </div>
         </div>

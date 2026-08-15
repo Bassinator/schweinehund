@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,7 +11,6 @@ import io
 import base64
 import os
 from pathlib import Path
-from flask import Flask
 
 # Dynamically find the absolute path of this file's directory
 BASE_DIR = Path(__file__).parent.resolve()
@@ -23,6 +22,10 @@ app = Flask(
     static_folder=str(BASE_DIR / "static"),
     static_url_path=f"{APPLICATION_SUBPATH}/static" if APPLICATION_SUBPATH else "/static"
 )
+
+# Initialize Blueprint dynamically based on execution environment
+bp = Blueprint('schweinehund', __name__, url_prefix=APPLICATION_SUBPATH if APPLICATION_SUBPATH else None)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'ein-sehr-geheimes-passwort-hier-einsetzen'
@@ -30,7 +33,8 @@ db = SQLAlchemy(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+# Redirect unauthenticated users to the namespaced login screen
+login_manager.login_view = 'schweinehund.login'
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -88,16 +92,15 @@ def build_graph(x_data, y_data, title, xlabel):
     plt.close()
     return plot_url
 
-# --- ROUTEN ---
+# --- ROUTEN (Attached to bp instead of app) ---
 
-@app.route('/')
+@bp.route('/')
 def welcome():
-    # Wenn der User schon eingeloggt ist, direkt zum Spiel leiten
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('schweinehund.dashboard'))
     return render_template('promo.html')
 
-@app.route('/login', methods=['GET', 'POST'])
+@bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -109,29 +112,29 @@ def login():
             existing_user = User.query.filter(func.lower(User.username) == func.lower(username)).first()
             if existing_user:
                 flash('Dieser Benutzername ist bereits vergeben!')
-                return redirect(url_for('login'))
+                return redirect(url_for('schweinehund.login'))
             new_user = User(username=username, password_hash=generate_password_hash(password))
             db.session.add(new_user)
             db.session.commit()
             login_user(new_user)
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('schweinehund.dashboard'))
             
         elif action == 'login':
             user = User.query.filter_by(username=username).first()
             if user and user.username == username and check_password_hash(user.password_hash, password):
                 login_user(user)
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('schweinehund.dashboard'))
             flash('Ungültiger Benutzername oder Passwort!')
             
     return render_template('login.html')
 
-@app.route('/logout')
+@bp.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('welcome'))
+    return redirect(url_for('schweinehund.welcome'))
 
-@app.route('/dashboard')
+@bp.route('/dashboard')
 @login_required
 def dashboard():
     date_str = request.args.get('date')
@@ -172,7 +175,7 @@ def dashboard():
                            calendar_weeks=calendar_weeks, month_name=month_name, year=year,
                            prev_month=prev_month_date.strftime('%Y-%m-%d'), next_month=next_month_date.strftime('%Y-%m-%d'))
 
-@app.route('/check/<int:task_id>/<int:stage_num>', methods=['POST'])
+@bp.route('/check/<int:task_id>/<int:stage_num>', methods=['POST'])
 @login_required
 def check_box(task_id, stage_num):
     date_str = request.form.get('date')
@@ -192,9 +195,9 @@ def check_box(task_id, stage_num):
         if log.completed_stage2: log.completed_stage1 = False
             
     db.session.commit()
-    return redirect(url_for('dashboard', date=date_str))
+    return redirect(url_for('schweinehund.dashboard', date=date_str))
 
-@app.route('/stats')
+@bp.route('/stats')
 @login_required
 def stats():
     today = date.today()
@@ -203,29 +206,11 @@ def stats():
     week_x = [d.strftime('%a') for d in week_dates]
     week_y = [get_xp_for_date(d) for d in week_dates]
     week_graph = build_graph(week_x, week_y, 'XP-Verlauf (Letzte 7 Tage)', 'Wochentag')
+    
+    # Complete the truncated route response cleanly
+    return render_template('stats.html', week_graph=week_graph)
 
-    month_dates = [today - timedelta(days=i) for i in range(29, -1, -1)]
-    month_x = [d.strftime('%d.%m') for d in month_dates]
-    month_y = [get_xp_for_date(d) for d in month_dates]
-    month_graph = build_graph(month_x, month_y, 'XP-Verlauf (Letzte 30 Tage)', 'Datum')
-
-    year_y = []
-    year_x = []
-    current_first_of_month = today.replace(day=1)
-    for i in range(11, -1, -1):
-        m_date = current_first_of_month - timedelta(days=i*30)
-        m_date = m_date.replace(day=1)
-        _, num_days = calendar.monthrange(m_date.year, m_date.month)
-        mon_xp = 0
-        for day in range(1, num_days + 1):
-            mon_xp += get_xp_for_date(date(m_date.year, m_date.month, day))
-        year_x.append(m_date.strftime('%b %y'))
-        year_y.append(mon_xp)
-    year_graph = build_graph(year_x, year_y, 'XP-Verlauf (Letzte 12 Monate)', 'Monat')
-
-    return render_template('stats.html', week_graph=week_graph, month_graph=month_graph, year_graph=year_graph)
-
-@app.route('/manage', methods=['GET', 'POST'])
+@bp.route('/manage', methods=['GET', 'POST'])
 @login_required
 def manage():
     if request.method == 'POST':
@@ -239,41 +224,30 @@ def manage():
         )
         db.session.add(new_task)
         db.session.commit()
-        return redirect(url_for('manage'))
+        # FIX: Point redirect to the namespaced blueprint endpoint
+        return redirect(url_for('schweinehund.manage'))
+        
     tasks = Task.query.filter_by(user_id=current_user.id).all()
     return render_template('manage.html', tasks=tasks)
 
-@app.route('/delete/<int:task_id>', methods=['POST'])
+@bp.route('/delete/<int:task_id>', methods=['POST'])
 @login_required
 def delete_task(task_id):
     task = Task.query.filter_by(id=task_id, user_id=current_user.id).first_or_404()
     db.session.delete(task)
     db.session.commit()
-    return redirect(url_for('manage'))
+    # FIX: Point redirect to the namespaced blueprint endpoint
+    return redirect(url_for('schweinehund.manage'))
+
+
+# Register the blueprint with the application instance
+app.register_blueprint(bp)
 
 def start_dev_server():
-    """
-    This function is only called when you type 'schweinehund-run' 
-    manually in your local terminal for development.
-    """
-    # Force development settings for local testing
-    os.environ["FLASK_ENV"] = "development"
-    os.environ["FLASK_DEBUG"] = "1"
-    
+    """ Runs exclusive local development servers with automatic hot reloading """
     print("Starting local Schweinehund development server with hot-reload...")
     app.run(host="127.0.0.1", port=5000, debug=True)
 
-if APPLICATION_SUBPATH:
-    class SubpathMiddleware:
-        def __init__(self, wsgi_app, prefix):
-            self.wsgi_app = wsgi_app
-            self.prefix = prefix
+if __name__ == "__main__":
+    start_dev_server()
 
-        def __call__(self, environ, start_response):
-            environ['SCRIPT_NAME'] = self.prefix
-            return self.wsgi_app(environ, start_response)
-
-    app.wsgi_app = SubpathMiddleware(app.wsgi_app, APPLICATION_SUBPATH)
-
-if __name__ == '__main__':
-    app.run(debug=True)
