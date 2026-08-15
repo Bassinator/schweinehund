@@ -1,10 +1,10 @@
 ---
 - name: Deploy Schweinehund Python App Natively via Git Pip (Behind Traefik)
-  hosts: webservers
+  hosts: all
   become: yes
   vars:
     # URL format tells pip to target your repository's main branch directly
-    repo_pip_url: "git+https://github.com"
+    repo_pip_url: "git+https://github.com/Bassinator/schweinehund.git@main"
     app_dir: "/opt/schweinehund"
     app_secret_key: "SuperSecureRandomPassword123!"
 

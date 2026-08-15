@@ -1,2 +1,0 @@
-[console_scripts]
-schweinehund-run = schweinehund.main:main
