@@ -215,19 +215,6 @@ def check_box(task_id, stage_num):
     db.session.commit()
     return redirect(url_for('schweinehund.dashboard', date=date_str))
 
-@bp.route('/stats')
-@login_required
-def stats():
-    today = date.today()
-    
-    week_dates = [today - timedelta(days=i) for i in range(6, -1, -1)]
-    week_x = [d.strftime('%a') for d in week_dates]
-    week_y = [get_xp_for_date(d) for d in week_dates]
-    week_graph = build_graph(week_x, week_y, 'XP-Verlauf (Letzte 7 Tage)', 'Wochentag')
-    
-    # Complete the truncated route response cleanly
-    return render_template('stats.html', week_graph=week_graph)
-
 @app.route('/stats')
 @login_required
 def stats():
