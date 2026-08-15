@@ -1,12 +1,15 @@
 [Unit]
-Description=Schweinehund Production App
+Description=Schweinehund Production App (Gunicorn)
 After=network.target
 
 [Service]
 Type=simple
 User=root
 WorkingDirectory={{ app_dir }}
-ExecStart={{ app_dir }}/venv/bin/schweinehund-run
+# 1. We call gunicorn directly from the production virtual environment
+# 2. We bind it to all interfaces (0.0.0.0) or localhost (127.0.0.1)
+# 3. We point it to the app instance inside your module structure
+ExecStart={{ app_dir }}/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 schweinehund.app:app
 Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1

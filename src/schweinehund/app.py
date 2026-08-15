@@ -9,8 +9,18 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import io
 import base64
+import os
+from pathlib import Path
+from flask import Flask
 
-app = Flask(__name__)
+# Dynamically find the absolute path of this file's directory
+BASE_DIR = Path(__file__).parent.resolve()
+
+app = Flask(
+    __name__,
+    template_folder=str(BASE_DIR / "templates"),
+    static_folder=str(BASE_DIR / "static")
+)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'ein-sehr-geheimes-passwort-hier-einsetzen'

@@ -3,3 +3,4 @@ __pycache__
 .token
 instance/todo.db
 src/schweinehund.egg-info
+src/instance
