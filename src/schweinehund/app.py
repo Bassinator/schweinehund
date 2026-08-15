@@ -215,7 +215,7 @@ def check_box(task_id, stage_num):
     db.session.commit()
     return redirect(url_for('schweinehund.dashboard', date=date_str))
 
-@app.route('/stats')
+@bp.route('/stats')
 @login_required
 def stats():
     today = date.today()
