@@ -60,13 +60,16 @@
         <div class="task-card" style="{% if status_map.get(task.id, {}).s1 %}border-color: #ff9800;{% elif status_map.get(task.id, {}).s2 %}border-color: #2196F3;{% endif %}">
             <h3>> {{ task.title }}</h3>
             <div class="btn-group">
-                <form action="/check/{{ task.id }}/1" method="POST" style="flex: 1;">
+                <!-- FIXED: Dynamic blueprint action mapping for Stage 1 -->
+                <form action="{{ url_for('schweinehund.check_box', task_id=task.id, stage_num=1) }}" method="POST" style="flex: 1;">
                     <input type="hidden" name="date" value="{{ selected_date.strftime('%Y-%m-%d') }}">
                     <button type="submit" class="btn {% if status_map.get(task.id, {}).s1 %}btn-s1-on{% else %}btn-off{% endif %}">
                         [LVL 1] {{ task.stage1_text }}<br>+{{ task.stage1_points }} XP
                     </button>
                 </form>
-                <form action="/check/{{ task.id }}/2" method="POST" style="flex: 1;">
+                
+                <!-- FIXED: Dynamic blueprint action mapping for Stage 2 -->
+                <form action="{{ url_for('schweinehund.check_box', task_id=task.id, stage_num=2) }}" method="POST" style="flex: 1;">
                     <input type="hidden" name="date" value="{{ selected_date.strftime('%Y-%m-%d') }}">
                     <button type="submit" class="btn {% if status_map.get(task.id, {}).s2 %}btn-s2-on{% else %}btn-off{% endif %}">
                         [MAXED] {{ task.stage2_text }}<br>+{{ task.stage2_points }} XP
