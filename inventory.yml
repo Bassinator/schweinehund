@@ -1,0 +1,5 @@
+all:
+  hosts:
+    temp-late.local:
+      ansible_user: epic
+      ansible_password: epic

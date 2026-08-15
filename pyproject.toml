@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "schweinehund"
+version = "1.0.0"
+description = "Natives Deployment der Schweinehund Python App via Pip"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+]
+dependencies = [
+    "python-dotenv>=1.0.0",
+    "Flask>=3.0.0",
+    "Flask-Login>=0.6.0",
+    # Füge hier weitere Pakete hinzu falls deine app.py noch andere Module importiert
+]
+
+[tool.setuptools]
+# WICHTIG: Erzwingt, dass static/ und templates/ mitverpackt werden
+include-package-data = true
+
+[project.scripts]
+# Verknüpft das Terminal-Kommando mit dem Einstiegspunkt in src/schweinehund/main.py
+schweinehund-run = "schweinehund.main:main"
+

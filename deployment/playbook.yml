@@ -1,0 +1,64 @@
+---
+- name: Deploy Schweinehund Python App Natively via Git Pip (Behind Traefik)
+  hosts: webservers
+  become: yes
+  vars:
+    # URL format tells pip to target your repository's main branch directly
+    repo_pip_url: "git+https://github.com"
+    app_dir: "/opt/schweinehund"
+    app_secret_key: "SuperSecureRandomPassword123!"
+
+  tasks:
+    - name: Update apt cache and install base system packages
+      apt:
+        name:
+          - python3-pip
+          - python3-venv
+          - git   # Git must be installed on the server so pip can fetch the repo
+        state: present
+        update_cache: yes
+
+    - name: Ensure base deployment directory structure exists
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ app_dir }}"
+        - "{{ app_dir }}/instance"
+
+    - name: Install or update Python application directly via Pip from GitHub
+      pip:
+        name: "{{ repo_pip_url }}"
+        state: latest
+        virtualenv: "{{ app_dir }}/venv"
+        virtualenv_command: python3 -m venv
+      register: pip_install
+
+    - name: Deploy .env configuration file
+      template:
+        src: templates/env.j2
+        dest: "{{ app_dir }}/.env"
+        mode: '0600'
+      register: env_file
+
+    - name: Deploy Systemd service file
+      template:
+        src: templates/systemd.j2
+        dest: "/etc/systemd/system/schweinehund.service"
+        mode: '0644'
+      register: systemd_file
+
+    - name: Reload Systemd daemon
+      systemd:
+        daemon_reload: yes
+      when: systemd_file.changed
+
+    - name: Enable and restart Schweinehund service
+      systemd:
+        name: schweinehund
+        enabled: yes
+        state: restarted
+      # Automatically restarts if the code package updates, or env/service specs change
+      when: pip_install.changed or env_file.changed or systemd_file.changed
+
