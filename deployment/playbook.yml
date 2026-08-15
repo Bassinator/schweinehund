@@ -62,3 +62,13 @@
       # Automatically restarts if the code package updates, or env/service specs change
       when: pip_install.changed or env_file.changed or systemd_file.changed
 
+    - name: Copy administrative tools from files directory
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "{{ app_dir }}/{{ item }}"
+        mode: '0744'
+        owner: root
+        group: root
+      loop:
+        - generate_test_data.py
+        - delete_user_and_data.py
