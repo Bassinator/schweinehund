@@ -68,7 +68,7 @@
     {% for task in tasks %}
     <div class="task-list-item">
         <span>> <strong>{{ task.title }}</strong> (<span style="color: #ff9800;">{{ task.stage1_text }}</span>/<span style="color: #2196F3;">{{ task.stage2_text }}</span>)</span>
-        <form action="/delete/{{ task.id }}" method="POST">
+        <form action="{{ url_for('schweinehund.dashboard') }}/{{ task.id }}" method="POST">
             <button type="submit" class="btn-delete">[ABORT]</button>
         </form>
     </div>

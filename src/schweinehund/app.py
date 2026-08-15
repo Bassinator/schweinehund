@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 # Dynamically find the absolute path of this file's directory
-BASE_DIR = Path(__file__).parent.resolve()
+BASE_DIR = Path(str(resources.files("schweinehund")))
 APPLICATION_SUBPATH = os.getenv("APPLICATION_SUBPATH", "")
 
 app = Flask(
