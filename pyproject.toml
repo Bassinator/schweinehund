@@ -16,6 +16,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "Flask>=3.0.0",
     "Flask-Login>=0.6.0",
+    +flask-sqlalchemy",
     "matplotlib",
     "gunicorn",
     # Füge hier weitere Pakete hinzu falls deine app.py noch andere Module importiert
